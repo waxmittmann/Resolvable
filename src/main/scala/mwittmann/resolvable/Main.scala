@@ -16,7 +16,7 @@ object Main {
     pass = "miles"
   )
 
-  object ResolvableToTask extends ResolvableInstance[Task] {
+  object ResolvableToTask extends ResolvableDefinition[Task] {
     implicit val resolvedMonad: Monad[Task] = Task.taskInstance
     override type ResolveViaContext[A] = ConnectionIO[A]
 

@@ -4,7 +4,7 @@ import scalaz.Free.Trampoline
 import scalaz.Scalaz._
 import scalaz._
 
-trait ResolvableInstance[T[_]] {
+trait ResolvableDefinition[T[_]] {
   implicit val resolvedMonad: Monad[T]
 
   type ResolveViaContext[A]

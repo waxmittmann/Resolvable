@@ -13,5 +13,6 @@ libraryDependencies ++=
   List(
     "org.scalaz" %% "scalaz-core" % "7.2.14",
     "org.tpolecat" %% "doobie-core" % DoobieVersion,
-    "org.tpolecat" %% "doobie-postgres" % DoobieVersion
+    "org.tpolecat" %% "doobie-postgres" % DoobieVersion,
+    "org.specs2" %% "specs2-core" % "3.9.1" % "test"
   )
