@@ -1,15 +1,20 @@
 package mwittmann.resolvable.auto2
-/*
+
 import scala.reflect.runtime.universe._
 import scalaz.Scalaz._
 import scalaz._
 
+import mwittmann.packagefold.FlatMapDefn
+
 trait AutoResolvableDefinition2[T[_]] {
   implicit val resolvedMonad: Monad[T]
 
-  type ResolveViaContext[A]
+  type ResolvableThing[A]
 
-  implicit val resolvedResolveViaContext: Monad[ResolveViaContext]
+  implicit val resolvedResolveViaContext: Monad[ResolvableThing]
+
+  object FlatMap extends FlatMapDefn[Resolvable]
+  import FlatMap._
 
   sealed trait Resolvable[A] {
     val tag: TypeTag[_]
@@ -19,56 +24,56 @@ trait AutoResolvableDefinition2[T[_]] {
     def map[B](fn: A => B): Resolvable[B] = ResolvableMonad.map(this)(fn)
   }
 
-  case class FromResolved[A](resolved: T[A]) extends Resolvable[A] {
+  case class Resolved[A](resolved: T[A]) extends Resolvable[A] {
     override val tag = typeTag[this.type]
   }
-  def fromResolved[A](resolved: T[A]): Resolvable[A] = FromResolved(resolved)
+  def resolved[A](resolved: T[A]): Resolvable[A] = Resolved(resolved)
 
-  case class ResolvableViaContext[A](resolvableThing: ResolveViaContext[A]) extends Resolvable[A] {
+  case class ViaContext[A](resolvableThing: ResolvableThing[A]) extends Resolvable[A] {
     override val tag = typeTag[this.type]
   }
-  def resolvableViaContext[A](resolvableThing: ResolveViaContext[A]): Resolvable[A] = ResolvableViaContext(resolvableThing)
+  def viaContext[A](resolvableThing: ResolvableThing[A]): Resolvable[A] = ViaContext(resolvableThing)
 
 
   //def resolveInContext[A](resolveViaContext: ResolveViaContext[A]): T[A]
-  def resolveInContext[A](resolveViaContext: ResolveViaContext[A]): T[A]
+  def resolveInContext[A](resolveViaContext: ResolvableThing[A]): T[A]
 
   def mergeInContext[A](
-    resolveViaContext: ResolveViaContext[A],
+    resolveViaContext: ResolvableThing[A]//,
 //    resolvable: Resolvable[B]
   ): Resolvable[A]
 
   def resolve[A](resolvable: Resolvable[A]): T[A] = resolvable match {
-    case FromResolved(resolved) => resolved
+    case Resolved(resolved) => resolved
 
       // Danger danger
-    case ResolvableViaContext(resolvableThing) =>
+    case ViaContext(resolvableThing) =>
       resolveInContext(
         resolvableThing
       )
   }
 
   def doit[A, B](
-    resolvableThing: ResolveViaContext[A],
+    resolvableThing: ResolvableThing[A],
     fn: A => Resolvable[B]
   ): Resolvable[B] = {
 
-    val x1: ResolveViaContext[Resolvable[B]] = resolvableThing.map { (a: A) =>
+    val x1: ResolvableThing[Resolvable[B]] = resolvableThing.map { (a: A) =>
       val value: Resolvable[B] = fn(a)
       value match {
-        case fr @ FromResolved(_) => fr
-        case ResolvableViaContext(resolvableThing2) => ResolvableViaContext(resolvableThing2)
+        case fr @ Resolved(_) => fr
+        case ViaContext(resolvableThing2) => ViaContext(resolvableThing2)
       }
     }
 
   }
 
   object ResolvableMonad extends Monad[Resolvable] {
-    override def point[A](a: => A): Resolvable[A] = fromResolved(a.point[T])
+    override def point[A](a: => A): Resolvable[A] = resolved(a.point[T])
 
     override def bind[A, B](ta: Resolvable[A])(fn: (A) => Resolvable[B]): Resolvable[B] =
       ta match {
-        case ResolvableViaContext(resolvableThing) => {
+        case ViaContext(resolvableThing) => {
 //          val x1: ResolveViaContext[Resolvable[B]] = resolvableThing.map { (a: A) =>
 //            val value: Resolvable[B] = fn(a)
 //            value match {
@@ -77,11 +82,13 @@ trait AutoResolvableDefinition2[T[_]] {
 //            }
 //          }
 
-          val x1: ResolveViaContext[Resolvable[B]] = resolvableThing.map { (a: A) =>
+          val x: FlatMap.FlatMap[A, B] = flatMap(ta, fn)
+
+          val x1: ResolvableThing[Resolvable[B]] = resolvableThing.map { (a: A) =>
             val value: Resolvable[B] = fn(a)
             value match {
-              case fr @ FromResolved(_) => fr
-              case ResolvableViaContext(resolvableThing2) => ResolvableViaContext(resolvableThing2)
+              case fr @ Resolved(_) => fr
+              case ViaContext(resolvableThing2) => ViaContext(resolvableThing2)
             }
           }
 
@@ -117,11 +124,10 @@ trait AutoResolvableDefinition2[T[_]] {
 //          FromResolved(x2)
         }
 
-        case FromResolved(v) => {
+        case Resolved(v) => {
           val x2: T[B] = v.map(fn).flatMap(resolve)
-          FromResolved(x2)
+          Resolved(x2)
         }
       }
   }
 }
-*/
