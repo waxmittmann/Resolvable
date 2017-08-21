@@ -1,10 +1,10 @@
-package mwittmann.resolvable
+package mwittmann.resolvable.delayed
 
 import scalaz.Free.Trampoline
 import scalaz.Scalaz._
 import scalaz._
 
-trait ResolvableDefinition[T[_]] {
+trait DelayedResolvableDefinition[T[_]] {
   implicit val resolvedMonad: Monad[T]
 
   type ResolveViaContext[A]
